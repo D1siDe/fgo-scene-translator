@@ -1,0 +1,88 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net8.0-android</TargetFrameworks>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <OutputType>Exe</OutputType>
+    <UseMaui>true</UseMaui>
+    <SingleProject>true</SingleProject>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    
+    <!-- Отключение AOT и тримминга для совместимости -->
+    <RunAOTCompilation>false</RunAOTCompilation>
+    <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
+    <PublishTrimmed>false</PublishTrimmed>
+    
+    <!-- Запрет генерации битых кэшей дизайнеров ресурсов -->
+    <AndroidUseIntermediateDesignerFile>false</AndroidUseIntermediateDesignerFile>
+    
+    <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+    <AndroidUseDefaultAotProfile>false</AndroidUseDefaultAotProfile>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <AndroidEnableAssemblyCompression>false</AndroidEnableAssemblyCompression>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Исключаем справочные папки из компиляции MAUI -->
+    <Compile Remove="external_decryptor\**" />
+    <None Include="external_decryptor\**" />
+    
+    <Compile Remove="AssetBundleExtractor\**" />
+    <None Include="AssetBundleExtractor\**" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Maui.Controls" Version="8.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="8.0.0" />
+    <PackageReference Include="RestSharp" Version="112.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <MauiIcon Include="Resources\AppIcon\appicon.svg"
+              ForegroundFile="Resources\AppIcon\appiconfg.svg"
+              Color="#1F1F1F" />
+    <MauiAsset Include="Resources\Raw\**"
+               LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+
+    <!-- собранный сервером zip + манифест из корня проекта -->
+  </ItemGroup>
+
+  <!-- Полная изоляция от невалидных ресурсов -->
+  <ItemGroup>
+
+    <!-- Полностью исключаем общую папку values, чтобы AndroidResgen ее не трогал -->
+    <Compile Remove="temp_ref\**" />
+    <None Remove="temp_ref\**" />
+    <EmbeddedResource Remove="temp_ref\**" />
+    <MauiXaml Remove="temp_ref\**" />
+
+<Compile Remove="external_decryptor\**" />
+    <None Include="external_decryptor\**" />
+    
+    <Compile Remove="AssetBundleExtractor\**" />
+    <None Include="AssetBundleExtractor\**" />
+
+    <!-- Добавляем исключение для папки _agent_workspace -->
+    <Compile Remove="_agent_workspace\**" />
+    <None Include="_agent_workspace\**" />
+    
+    <AndroidResource Remove="Resources\values\**" />
+    <AndroidResource Remove="Resources\values" />
+    <None Remove="Resources\values\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidJavaLibrary Include="libs\*.jar" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Remove="*_backup*\**" />
+    <None Remove="*_backup*\**" />
+  </ItemGroup>
+</Project>
+
+
+

@@ -1,0 +1,58 @@
+﻿# --- данные игры и результаты работы (чужие материалы и ваши черновики) ---
+collected/
+scripts_ja/
+work/
+raw_game_cache/
+fgo_backups*/
+fgo_local_mods/
+pack/
+translate_pack.zip
+cache/
+translations/
+translations_wrapped/
+state/
+*.bin
+*.unity3d
+*.apk
+*.aab
+
+# --- сторонние инструменты и ключи шифрования ---
+external_decryptor/
+AssetStorage*.txt
+assetbundleKey.json
+AssetListWithExtraKeyType.json
+
+# --- личные настройки ---
+.aider*
+.env
+glossary.json
+start_server.ps1
+release_check.py
+*.lnk
+
+# --- старый код приложения, не используется ---
+core/AndroidPatcher.cs
+core/ShizukuPatcher.cs
+
+# --- окружения и сборка ---
+.venv/
+.venv-*/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+bin/
+obj/
+.vs/
+.vscode/
+*.user
+*.suo
+*.log
+
+# --- черновики и временное ---
+temp*/
+tmp*/
+out_*/
+*.bak
+*.backup
+*.png

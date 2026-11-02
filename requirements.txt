@@ -1,0 +1,45 @@
+# FGO-RU Translate — Требования к зависимостям
+
+# Core dependencies
+Flask==3.0.0
+requests==2.31.0
+aiohttp==3.9.1
+certifi==2023.11.17
+chardet==5.2.0
+
+# MITM Proxy (для перехвата трафика)
+mitmproxy==9.0.2
+
+# UnityPy (для работы с AssetBundle)
+UnityPy==2.3.0
+
+# FastAPI для локального сервера перевода
+pydantic==2.5.3
+aiofiles==23.2.1
+python-multipart==0.0.6
+
+# SQLAlchemy для базы переводов
+sqlalchemy==2.0.23
+
+# Парсинг текстовых ресурсов
+resx-parser==0.4.0
+beautifulsoup4==4.12.3
+
+# Unity assets (экстракция из .unityasset)
+unity-assets-loader==1.1.0
+
+# Утилиты
+python-dotenv==1.0.0
+tqdm==4.66.1
+rich==13.7.0
+click==8.1.7
+
+# Вспомогательные библиотеки
+numpy==1.26.2
+# Вспомогательные библиотеки
+numpy==1.26.2
+
+# FastAPI для локального сервера перевода
+fastapi==0.104.1
+uvicorn==0.24.0
+aiosqlite==0.19.0
