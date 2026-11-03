@@ -8,55 +8,69 @@ An unofficial tool for installing translated story scenes into Fate/Grand Order 
 
 ## How it works
 
-A PC server (Python) decrypts the story files, inserts your translation and adjusts the CRC32 checksum to match the original. The phone app (.NET MAUI) uses [Shizuku](https://shizuku.rikka.app/) to read and write files in the game's `Android/data` folder and talks to the server over Wi-Fi.
+A PC server (Python) decrypts the story files, inserts your translation and adjusts the CRC32 checksum to match the original. The phone app uses [Shizuku](https://shizuku.rikka.app/) to read and write files in the game's `Android/data` folder and talks to the server over Wi-Fi or USB.
 
 ```
-game → "Send chapters to PC" → PC: decryption → you translate scenes → PC: build → "Install translation" → game
+game → "Send chapters to PC" → PC: decrypted scenes → you translate → "Install translation" → game
 ```
 
 Chapter files are patched on the fly. The translation survives game updates: after an update, press "Install translation" again. "Check for updates" tells you when a chapter changed or a new translation is available.
 
-## Repository layout
+## Quick start (ready-made APK)
 
-| Path | Purpose |
-| --- | --- |
-| `server.py`, `core/` | Server: decryption, translation build, CRC32 fix-up, line wrapping |
-| `scene_tool.py` | Working files for translators (JA/target text), rebuild with tag validation |
-| `export_scripts.py` | Decrypts all chapters sent from the phone into `scripts_ja/` |
-| `build_pack.py`, `install_pack.py` | Batch install over adb (emulator) |
-| `FGOPatcher.Maui.csproj`, `MainPage*`, `L.cs`, `PhoneInstaller.cs`, `ShizukuShell.cs`, `Platforms/`, `Resources/`, `libs/` | Phone app |
+**On the phone**
 
-## What you need to provide yourself
+1. Download `FGO-Scene-Translator-*.apk` from [Releases](../../releases) (ARM64) and install it.
+2. Install and start [Shizuku](https://shizuku.rikka.app/) (Android 11+, wireless debugging).
+3. Open any chapter in the game so it downloads its script.
 
-- Python 3.11: `python -m pip install flask requests UnityPy lz4`
-- .NET 8 SDK with the `maui-android` workload, Android platform-tools (`adb`)
-- Shizuku on the phone (Android 11+)
-- The FGO bundle encryption keys (`assetbundleKey.json`, `AssetListWithExtraKeyType.json`) in `external_decryptor/`. See the top of `server.py` (`KEYS_JSON`, `EXTRA_JSON`) for the expected paths and structure. The keys are not part of this repository.
-- Shizuku libraries (`libs/shizuku-*.jar`) from Maven (version 13.1.5), see `FGOPatcher.Maui.csproj`.
+**On the PC** (Windows, PowerShell)
 
-## Quick start
+1. Install Python 3.11 and the dependencies, download this repository:
 
-```powershell
-chcp 65001; $env:PYTHONUTF8 = 1
-python scene_tool.py selftest
+   ```powershell
+   python -m pip install flask requests UnityPy lz4
+   git clone https://github.com/D1siDe/fgo-scene-translator.git
+   cd fgo-scene-translator
+   ```
 
-$env:FGO_HOST = "0.0.0.0"
-$env:FGO_ADB_SERIAL = "<phone serial from adb devices>"
-python server.py
+2. Put the FGO bundle encryption keys (`assetbundleKey.json`, `AssetListWithExtraKeyType.json`) into `external_decryptor/`. See the top of `server.py` (`KEYS_JSON`, `EXTRA_JSON`). The keys are not part of this repository.
+3. Start the server (for Wi-Fi it must listen on all interfaces, and the firewall must allow port 5000):
 
-dotnet build -t:Run -f net8.0-android -c Debug -p:AdbTarget="-s <serial>"
-```
+   ```powershell
+   chcp 65001; $env:PYTHONUTF8 = 1
+   $env:FGO_HOST = "0.0.0.0"
+   New-NetFirewallRule -DisplayName "FGO Scene Translator" -Direction Inbound -Protocol TCP -LocalPort 5000 -Action Allow   # once, as administrator
+   python server.py
+   ```
 
-Typical workflow in the app:
+   Alternative over USB: leave `FGO_HOST` unset, run `adb reverse tcp:5000 tcp:5000` and use `http://127.0.0.1:5000` in the app.
 
-1. **Check server** and **Check Shizuku**.
-2. Open a chapter in the game so it downloads, then press **Send chapters to PC**. The server stores and decrypts it.
+**In the app**
+
+1. Enter the server address (`http://<PC IP>:5000`) and press **Check server**, then **Check Shizuku**.
+2. Press **Send chapters to PC**. The server stores and decrypts the chapters you have downloaded.
 3. Translate the scenes (see below).
-4. Press **Install translation**.
-5. After game updates or new translations, press **Check for updates**, then **Install translation** again.
+4. Press **Install translation**, then start the game.
+5. After game updates or new translations: **Check for updates**, then **Install translation** again.
 6. **Restore originals** puts the original files back.
 
 The collapsed "Emulator mode" section contains the same install/restore actions performed by the PC over adb. It is meant for emulators only.
+
+## Translation format
+
+A translation is the **original scene file with the text replaced**. Nothing is merged from two files.
+
+1. After **Send chapters to PC**, the decrypted scenes are in `scripts_ja/`, in a subfolder per chapter bundle (for example `scripts_ja/ScriptActionEncrypt_02/0200020010.txt`).
+2. Copy the scene you want to translate into the translations folder (`translations/scenarios/`, configurable with `FGO_TRANSLATIONS`) and replace the Japanese text with your translation. Keep the file name.
+3. Leave everything else as it is: scene commands, speaker lines (`＠name`) and the tags inside lines (`[r]`, `[%1]`, `[&a:b]`). Choice lines have the form `？N：text`; translate the text after the colon.
+4. Line breaks are inserted automatically: the server wraps the text to fit the dialogue window (width 34, 2 lines by default).
+
+The server picks up new or changed files, builds the chapter bundle on the fly and gives it to the phone. A scene without a translation file stays in Japanese.
+
+`scene_tool.py` is an optional helper: it exports scenes into convenient working files, checks that no tags were lost and builds the translation file for you. You do not need it if you edit the scene files directly.
+
+Wrapping is tuned for Latin/Cyrillic text. Adjust `FGO_WRAP_WIDTH` and `FGO_WRAP_LINES` for other languages, and make sure the game's font contains the glyphs you need.
 
 ## Environment variables
 
@@ -65,14 +79,26 @@ The collapsed "Emulator mode" section contains the same install/restore actions 
 | `FGO_HOST` | `127.0.0.1` | Address the server listens on (`0.0.0.0` for Wi-Fi) |
 | `FGO_ADB_SERIAL` | `127.0.0.1:16384` | Device for adb mode |
 | `FGO_TRANSLATIONS` | `translations/scenarios` | Folder with translations |
-| `FGO_DATA_DIR` | next to the scripts | Data folder: `collected/` (files from the phone), `scripts_ja/` (decrypted scenes), `work/` (translation working files) |
+| `FGO_DATA_DIR` | next to the scripts | Data folder: `collected/` (files from the phone), `scripts_ja/` (decrypted scenes), `work/` (working files of `scene_tool.py`) |
 | `FGO_WRAP`, `FGO_WRAP_WIDTH`, `FGO_WRAP_LINES` | `1`, `34`, `2` | Automatic line wrapping |
 
-## Translation format
+## Repository layout
 
-Working files `work/<scene>.txt` contain `JA:` / translation blocks without scene commands. Tags inside lines (`[r]`, `[%1]`, `[&a:b]`) must be carried over into the translated text; `scene_tool.py build` verifies that they match.
+| Path | Purpose |
+| --- | --- |
+| `server.py`, `core/` | Server: decryption, translation build, CRC32 fix-up, line wrapping |
+| `scene_tool.py` | Optional helper for translators: working files, tag validation |
+| `export_scripts.py` | Decrypts all chapters sent from the phone into `scripts_ja/` |
+| `build_pack.py`, `install_pack.py` | Batch install over adb (emulator) |
+| `FGOPatcher.Maui.csproj`, `MainPage*`, `L.cs`, `PhoneInstaller.cs`, `ShizukuShell.cs`, `Platforms/`, `Resources/`, `libs/` | Phone app (.NET MAUI) |
 
-Line wrapping is tuned for Latin/Cyrillic text (default width 34 characters, 2 lines per window). Adjust `FGO_WRAP_WIDTH` and `FGO_WRAP_LINES` for other languages, and make sure the game's font contains the glyphs you need.
+## Building the app from source
+
+Requires the .NET 8 SDK with the `maui-android` workload and the Shizuku libraries (`libs/shizuku-*.jar`, version 13.1.5 from Maven, see `FGOPatcher.Maui.csproj`).
+
+```powershell
+dotnet build -t:Run -f net8.0-android -c Debug -p:AdbTarget="-s <serial>"
+```
 
 ## License
 
