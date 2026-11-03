@@ -100,6 +100,12 @@ Requires the .NET 8 SDK with the `maui-android` workload and the Shizuku librari
 dotnet build -t:Run -f net8.0-android -c Debug -p:AdbTarget="-s <serial>"
 ```
 
+## Credits
+
+- [hexstr/FGOAssetsModifyTool](https://github.com/hexstr/FGOAssetsModifyTool): `core/fgo_crypto.py` is a Python port of the game's bundle/script cipher implementation from this project. The original repository does not state a license.
+- [Rayshift](https://rayshift.io/) and its translation tooling for FGO: inspiration for installing translations without repacking the game.
+- [Shizuku](https://github.com/RikkaApps/Shizuku-API) by RikkaApps: privileged file access on Android (Apache-2.0).
+
 ## License
 
 The code is released under the MIT License, see [LICENSE](LICENSE). Shizuku libraries (`libs/shizuku-*.jar`) are © RikkaApps, Apache-2.0. Game texts and resources are not part of this repository and belong to their respective rights holders.

@@ -100,6 +100,12 @@
 dotnet build -t:Run -f net8.0-android -c Debug -p:AdbTarget="-s <серийник>"
 ```
 
+## Благодарности
+
+- [hexstr/FGOAssetsModifyTool](https://github.com/hexstr/FGOAssetsModifyTool): `core/fgo_crypto.py` — порт на Python реализации шифрования бандлов и сценариев игры из этого проекта. В исходном репозитории лицензия не указана.
+- [Rayshift](https://rayshift.io/) и его инструменты перевода для FGO: идея установки перевода без перепаковки игры.
+- [Shizuku](https://github.com/RikkaApps/Shizuku-API) от RikkaApps: доступ к файлам с повышенными правами на Android (Apache-2.0).
+
 ## Лицензия
 
 Код распространяется по лицензии MIT, см. [LICENSE](LICENSE). Библиотеки Shizuku (`libs/shizuku-*.jar`) © RikkaApps, лицензия Apache-2.0. Тексты и ресурсы игры в репозиторий не входят и принадлежат правообладателям.
