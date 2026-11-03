@@ -4,38 +4,64 @@
              x:Class="FGOPatcher.Maui.MainPage"
              BackgroundColor="#1E1E1E">
 
-    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="20" RowSpacing="15">
-        <Label Grid.Row="0" Text="FGO RU Patcher" TextColor="#FFFFFF" FontSize="26"
-               FontAttributes="Bold" HorizontalOptions="Center" />
+    <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" Padding="16" RowSpacing="10">
 
-        <Label x:Name="StatusLabel" Grid.Row="1" Text="Проверьте сервер"
-               TextColor="#4CAF50" FontSize="16" HorizontalOptions="Center" />
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+            <Label x:Name="TitleLabel" Text="FGO Scene Translator" TextColor="#FFFFFF" FontSize="22"
+                   FontAttributes="Bold" VerticalOptions="Center" />
+            <Button x:Name="LangButton" Grid.Column="1" Text="EN" Clicked="OnLangClicked"
+                    BackgroundColor="#2A2A2A" TextColor="White" CornerRadius="8"
+                    Padding="14,0" HeightRequest="38" MinimumWidthRequest="56" />
+        </Grid>
 
-        <Border Grid.Row="2" Stroke="#333333" StrokeThickness="1" BackgroundColor="#121212">
+        <Label x:Name="HintLabel" Grid.Row="1" TextColor="#9AA0A6" FontSize="12" />
+
+        <Label x:Name="StatusLabel" Grid.Row="2" Text="Проверьте сервер"
+               TextColor="#4CAF50" FontSize="15" />
+
+        <Border Grid.Row="3" Stroke="#333333" StrokeThickness="1" BackgroundColor="#121212">
             <Editor x:Name="LogEditor" IsReadOnly="True" TextColor="#00FF66"
                     BackgroundColor="Transparent" FontFamily="monospace" FontSize="12"
                     AutoSize="Disabled" />
         </Border>
 
-        <VerticalStackLayout Grid.Row="3" Spacing="8" HorizontalOptions="Fill">
-            <Entry x:Name="ServerEntry" Placeholder="Адрес сервера на ПК" Text="http://127.0.0.1:5000"
+        <VerticalStackLayout Grid.Row="4" Spacing="8">
+            <Entry x:Name="ServerEntry" Text="http://127.0.0.1:5000"
                    TextColor="White" BackgroundColor="#2A2A2A" FontSize="14" />
-            <Button x:Name="CheckButton" Text="1. Проверить сервер" Clicked="OnCheckServerClicked"
-                    BackgroundColor="#007ACC" TextColor="White" CornerRadius="8" Padding="15,10" />
-            <Button x:Name="PatchButton" Text="2. Установить перевод" Clicked="OnApplyPatchClicked"
-                    BackgroundColor="#2EA043" TextColor="White" CornerRadius="8" Padding="15,10" />
-            <Button x:Name="PhoneInstallButton" Text="5. Установить перевод на этот телефон" Clicked="OnPhoneInstallClicked"
-                    BackgroundColor="#2EA043" TextColor="White" CornerRadius="8" Padding="15,10" />
-            <Button x:Name="PhoneRestoreButton" Text="6. Вернуть оригиналы на этом телефоне" Clicked="OnPhoneRestoreClicked"
+
+            <!-- Подготовка -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                <Button x:Name="CheckButton" Grid.Column="0" Clicked="OnCheckServerClicked"
+                        BackgroundColor="#007ACC" TextColor="White" CornerRadius="8" Padding="8,10" />
+                <Button x:Name="ShizukuButton" Grid.Column="1" Clicked="OnCheckShizukuClicked"
+                        BackgroundColor="#6A4FB3" TextColor="White" CornerRadius="8" Padding="8,10" />
+            </Grid>
+
+            <!-- Главное действие -->
+            <Button x:Name="PhoneInstallButton" Clicked="OnPhoneInstallClicked"
+                    BackgroundColor="#2EA043" TextColor="White" CornerRadius="8" Padding="15,14"
+                    FontSize="16" FontAttributes="Bold" />
+
+            <!-- Обслуживание -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                <Button x:Name="PhoneCheckButton" Grid.Column="0" Clicked="OnPhoneCheckClicked"
+                        BackgroundColor="#7A5C00" TextColor="White" CornerRadius="8" Padding="8,10" />
+                <Button x:Name="PhoneSyncButton" Grid.Column="1" Clicked="OnPhoneSyncClicked"
+                        BackgroundColor="#0B7285" TextColor="White" CornerRadius="8" Padding="8,10" />
+            </Grid>
+
+            <Button x:Name="PhoneRestoreButton" Clicked="OnPhoneRestoreClicked"
                     BackgroundColor="#B33A3A" TextColor="White" CornerRadius="8" Padding="15,10" />
-            <Button x:Name="PhoneSyncButton" Text="7. Передать главы на ПК" Clicked="OnPhoneSyncClicked"
-                    BackgroundColor="#0B7285" TextColor="White" CornerRadius="8" Padding="15,10" />
-            <Button x:Name="PhoneCheckButton" Text="8. Проверить обновления" Clicked="OnPhoneCheckClicked"
-                    BackgroundColor="#7A5C00" TextColor="White" CornerRadius="8" Padding="15,10" />
-            <Button x:Name="ShizukuButton" Text="4. Проверить Shizuku" Clicked="OnCheckShizukuClicked"
-                    BackgroundColor="#6A4FB3" TextColor="White" CornerRadius="8" Padding="15,10" />
-            <Button x:Name="RestoreButton" Text="3. Вернуть оригиналы" Clicked="OnRestoreClicked"
-                    BackgroundColor="#B33A3A" TextColor="White" CornerRadius="8" Padding="15,10" />
+
+            <!-- Режим эмулятора (сервер на ПК ставит через adb), по умолчанию свёрнут -->
+            <Button x:Name="AdvancedToggle" Clicked="OnAdvancedClicked"
+                    BackgroundColor="Transparent" TextColor="#9AA0A6" FontSize="12" Padding="0,4" />
+            <VerticalStackLayout x:Name="AdvancedPanel" IsVisible="False" Spacing="8">
+                <Button x:Name="PatchButton" Clicked="OnApplyPatchClicked"
+                        BackgroundColor="#2A6F3A" TextColor="White" CornerRadius="8" Padding="15,10" />
+                <Button x:Name="RestoreButton" Clicked="OnRestoreClicked"
+                        BackgroundColor="#7F2B2B" TextColor="White" CornerRadius="8" Padding="15,10" />
+            </VerticalStackLayout>
         </VerticalStackLayout>
     </Grid>
 </ContentPage>

@@ -18,22 +18,71 @@ public partial class MainPage : ContentPage
     public MainPage()
     {
         InitializeComponent();
+        ApplyLanguage();
         try { ServerEntry.Text = Microsoft.Maui.Storage.Preferences.Get("server_url", "http://127.0.0.1:5000"); } catch { }
         ServerEntry.TextChanged += (_, e) => { try { Microsoft.Maui.Storage.Preferences.Set("server_url", e.NewTextValue ?? ""); } catch { } };
-        AppendLog("[INIT] FGO Patcher готов. Сначала проверьте сервер.");
+        AppendLog("[INIT] FGO Scene Translator готов. Сначала проверьте сервер.");
     }
 
     private void AppendLog(string message)
     {
         MainThread.BeginInvokeOnMainThread(() =>
         {
-            LogEditor.Text += $"[{DateTime.Now:HH:mm:ss}] {message}\n";
+            LogEditor.Text += $"[{DateTime.Now:HH:mm:ss}] {L.Loc(message)}\n";
         });
+    }
+
+    // Текст статуса хранится по-русски и переводится при показе, поэтому переключение языка обновляет его на лету
+    private string _statusRu = "Проверьте сервер";
+    private void SetStatus(string ru)
+    {
+        _statusRu = ru;
+        StatusLabel.Text = L.Loc(ru);
+    }
+
+    private bool _advancedOpen;
+
+    private void ApplyLanguage()
+    {
+        LangButton.Text = L.En ? "RU" : "EN";
+        HintLabel.Text = L.T(
+            "Порядок: проверить сервер и Shizuku → «Установить перевод». «Передать главы на ПК» нужна после скачивания новых глав в игре.",
+            "Order: check the server and Shizuku → “Install translation”. Use “Send chapters to PC” after the game downloads new chapters.");
+        ServerEntry.Placeholder = L.T("Адрес сервера на ПК", "Server address on the PC");
+        CheckButton.Text = L.T("Проверить сервер", "Check server");
+        ShizukuButton.Text = L.T("Проверить Shizuku", "Check Shizuku");
+        PhoneInstallButton.Text = L.T("Установить перевод", "Install translation");
+        PhoneCheckButton.Text = L.T("Проверить обновления", "Check for updates");
+        PhoneSyncButton.Text = L.T("Передать главы на ПК", "Send chapters to PC");
+        PhoneRestoreButton.Text = L.T("Вернуть оригиналы", "Restore originals");
+        PatchButton.Text = L.T("Установить через ПК (эмулятор)", "Install via PC (emulator)");
+        RestoreButton.Text = L.T("Вернуть оригиналы через ПК (эмулятор)", "Restore originals via PC (emulator)");
+        UpdateAdvancedToggle();
+        StatusLabel.Text = L.Loc(_statusRu);
+    }
+
+    private void UpdateAdvancedToggle()
+    {
+        AdvancedToggle.Text = (_advancedOpen ? "▾ " : "▸ ") +
+            L.T("Режим эмулятора (установка через adb на ПК)", "Emulator mode (install through adb on the PC)");
+    }
+
+    private void OnLangClicked(object sender, EventArgs e)
+    {
+        L.Set(!L.En);
+        ApplyLanguage();
+    }
+
+    private void OnAdvancedClicked(object sender, EventArgs e)
+    {
+        _advancedOpen = !_advancedOpen;
+        AdvancedPanel.IsVisible = _advancedOpen;
+        UpdateAdvancedToggle();
     }
 
     private async void OnCheckServerClicked(object sender, EventArgs e)
     {
-        StatusLabel.Text = "Статус: проверка сервера...";
+        SetStatus("Статус: проверка сервера...");
         StatusLabel.TextColor = Colors.Orange;
         AppendLog($"Запрос {ServerUrl}/status ...");
 
@@ -51,7 +100,7 @@ public partial class MainPage : ContentPage
                 int cached = root.TryGetProperty("cached_bundles", out var c) ? c.GetInt32() : 0;
                 bool deviceReady = root.TryGetProperty("device_ready", out var dr) && dr.GetBoolean();
 
-                StatusLabel.Text = "Статус: сервер онлайн";
+                SetStatus("Статус: сервер онлайн");
                 StatusLabel.TextColor = Color.FromArgb("#4CAF50");
                 AppendLog("[OK] Сервер подключен.");
                 AppendLog($" • Шрифт (font.ttf): {(fontReady ? "найден" : "отсутствует")}");
@@ -61,14 +110,14 @@ public partial class MainPage : ContentPage
             }
             else
             {
-                StatusLabel.Text = $"Статус: HTTP {(int)response.StatusCode}";
+                SetStatus($"Статус: HTTP {(int)response.StatusCode}");
                 StatusLabel.TextColor = Colors.Red;
                 AppendLog($"[WARN] Ответ сервера: {body}");
             }
         }
         catch (Exception ex)
         {
-            StatusLabel.Text = "Статус: сервер недоступен";
+            SetStatus("Статус: сервер недоступен");
             StatusLabel.TextColor = Colors.Red;
             AppendLog($"[ERROR] {ex.Message}");
             AppendLog("[HINT] Запустите server.py на ПК и выполните: adb reverse tcp:5000 tcp:5000");
@@ -95,7 +144,7 @@ public partial class MainPage : ContentPage
     private async void OnApplyPatchClicked(object sender, EventArgs e)
     {
         SetBusy(true);
-        StatusLabel.Text = "Статус: сборка и установка перевода (может занять несколько минут)...";
+        SetStatus("Статус: сборка и установка перевода (может занять несколько минут)...");
         StatusLabel.TextColor = Colors.Orange;
         AppendLog("[PATCH] Сервер собирает перевод и ставит его на устройство через adb ...");
 
@@ -111,7 +160,7 @@ public partial class MainPage : ContentPage
 
             if (!response.IsSuccessStatusCode)
             {
-                StatusLabel.Text = "Статус: ошибка сервера";
+                SetStatus("Статус: ошибка сервера");
                 StatusLabel.TextColor = Colors.Red;
                 AppendLog($"[ERROR] {(root.TryGetProperty("error", out var er) ? er.ToString() : body)}");
                 return;
@@ -139,32 +188,32 @@ public partial class MainPage : ContentPage
 
             if (mode != "device")
             {
-                StatusLabel.Text = "Статус: перевод собран, но НЕ установлен";
+                SetStatus("Статус: перевод собран, но НЕ установлен");
                 StatusLabel.TextColor = Colors.Orange;
                 AppendLog("[WARN] Эмулятор недоступен по adb: файлы лежат в fgo_local_mods на ПК, в игру ничего не поставлено.");
             }
             else if (patched == 0)
             {
-                StatusLabel.Text = "Статус: ничего не изменено";
+                SetStatus("Статус: ничего не изменено");
                 StatusLabel.TextColor = Colors.Orange;
                 AppendLog("[WARN] Нечего ставить: проверьте переводы и ошибки выше.");
             }
             else
             {
-                StatusLabel.Text = "Статус: перевод установлен";
+                SetStatus("Статус: перевод установлен");
                 StatusLabel.TextColor = errors.Count == 0 && skipped.Count == 0 ? Color.FromArgb("#4CAF50") : Colors.Orange;
                 AppendLog("[SUCCESS] Перевод установлен. Игра была закрыта, запустите FGO заново.");
             }
         }
         catch (OperationCanceledException)
         {
-            StatusLabel.Text = "Статус: превышено время ожидания";
+            SetStatus("Статус: превышено время ожидания");
             StatusLabel.TextColor = Colors.Red;
             AppendLog("[ERROR] Сервер не ответил за 20 минут.");
         }
         catch (Exception ex)
         {
-            StatusLabel.Text = "Статус: ошибка";
+            SetStatus("Статус: ошибка");
             StatusLabel.TextColor = Colors.Red;
             AppendLog($"[ERROR] {ex.Message}");
             AppendLog("[HINT] Запущен ли server.py и выполнен ли: adb reverse tcp:5000 tcp:5000");
@@ -179,17 +228,17 @@ public partial class MainPage : ContentPage
     private async void OnPhoneInstallClicked(object sender, EventArgs e)
     {
         SetBusy(true);
-        StatusLabel.Text = "Статус: установка на этот телефон...";
+        SetStatus("Статус: установка на этот телефон...");
         StatusLabel.TextColor = Colors.Orange;
         try
         {
             await new PhoneInstaller(AppendLog).InstallAsync(ServerUrl);
-            StatusLabel.Text = "Статус: готово (см. журнал)";
+            SetStatus("Статус: готово (см. журнал)");
             StatusLabel.TextColor = Color.FromArgb("#4CAF50");
         }
         catch (Exception ex)
         {
-            StatusLabel.Text = "Статус: ошибка";
+            SetStatus("Статус: ошибка");
             StatusLabel.TextColor = Colors.Red;
             AppendLog($"[ERROR] {ex.GetType().Name}: {ex.Message}");
         }
@@ -270,7 +319,7 @@ public partial class MainPage : ContentPage
     private async void OnRestoreClicked(object sender, EventArgs e)
     {
         SetBusy(true);
-        StatusLabel.Text = "Статус: возврат оригиналов...";
+        SetStatus("Статус: возврат оригиналов...");
         StatusLabel.TextColor = Colors.Orange;
 
         try
@@ -283,14 +332,14 @@ public partial class MainPage : ContentPage
 
             if (!response.IsSuccessStatusCode)
             {
-                StatusLabel.Text = "Статус: ошибка возврата";
+                SetStatus("Статус: ошибка возврата");
                 StatusLabel.TextColor = Colors.Red;
                 AppendLog($"[ERROR] {(root.TryGetProperty("error", out var er) ? er.ToString() : body)}");
                 return;
             }
 
             var restored = Strings(root, "restored");
-            StatusLabel.Text = restored.Count > 0 ? "Статус: оригиналы возвращены" : "Статус: нечего возвращать";
+            SetStatus(restored.Count > 0 ? "Статус: оригиналы возвращены" : "Статус: нечего возвращать");
             StatusLabel.TextColor = restored.Count > 0 ? Color.FromArgb("#4CAF50") : Colors.Orange;
             AppendLog(restored.Count > 0
                 ? $"[OK] Возвращено файлов: {restored.Count} ({string.Join(", ", restored)})"
@@ -298,7 +347,7 @@ public partial class MainPage : ContentPage
         }
         catch (Exception ex)
         {
-            StatusLabel.Text = "Статус: ошибка";
+            SetStatus("Статус: ошибка");
             StatusLabel.TextColor = Colors.Red;
             AppendLog($"[ERROR] {ex.Message}");
         }
