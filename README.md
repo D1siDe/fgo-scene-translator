@@ -103,7 +103,7 @@ dotnet build -t:Run -f net8.0-android -c Debug -p:AdbTarget="-s <serial>"
 ## Credits
 
 - [hexstr/FGOAssetsModifyTool](https://github.com/hexstr/FGOAssetsModifyTool): `core/fgo_crypto.py` is a Python port of the game's bundle/script cipher implementation from this project. The original repository does not state a license.
-- [Rayshift](https://rayshift.io/) and its translation tooling for FGO: inspiration for installing translations without repacking the game.
+- [Rayshift](https://github.com/rayshift/translatefgo) and its translation tooling for FGO: inspiration for installing translations without repacking the game.
 - [Shizuku](https://github.com/RikkaApps/Shizuku-API) by RikkaApps: privileged file access on Android (Apache-2.0).
 
 ## License
