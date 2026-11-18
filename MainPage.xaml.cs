@@ -22,6 +22,22 @@ public partial class MainPage : ContentPage
         try { ServerEntry.Text = Microsoft.Maui.Storage.Preferences.Get("server_url", "http://127.0.0.1:5000"); } catch { }
         ServerEntry.TextChanged += (_, e) => { try { Microsoft.Maui.Storage.Preferences.Set("server_url", e.NewTextValue ?? ""); } catch { } };
         AppendLog("[INIT] FGO Scene Translator готов. Сначала проверьте сервер.");
+        Appearing += (_, _) => _ = CheckGameStateQuietAsync();
+    }
+
+    // Тихая проверка «игра обновилась?» при каждом открытии экрана: без запросов разрешения и без сервера
+    private bool _quietBusy;
+    private async Task CheckGameStateQuietAsync()
+    {
+        if (_quietBusy) return;
+        _quietBusy = true;
+        try
+        {
+            var st = await new PhoneInstaller(AppendLog).DetectGameUpdateAsync(true);
+            if (st != null) MainThread.BeginInvokeOnMainThread(() => SetStatus(st.Value.Status));
+        }
+        catch { }
+        finally { _quietBusy = false; }
     }
 
     private void AppendLog(string message)
@@ -46,12 +62,13 @@ public partial class MainPage : ContentPage
     {
         LangButton.Text = L.En ? "RU" : "EN";
         HintLabel.Text = L.T(
-            "Порядок: проверить сервер и Shizuku → «Установить перевод». «Передать главы на ПК» нужна после скачивания новых глав в игре.",
-            "Order: check the server and Shizuku → “Install translation”. Use “Send chapters to PC” after the game downloads new chapters.");
+            "Порядок: проверить сервер и Shizuku → «Установить перевод». Если игра обновилась или скачала новые главы: «Обновить после апдейта игры».",
+            "Order: check the server and Shizuku → “Install translation”. If the game updated or downloaded new chapters: “Update after game update”.");
         ServerEntry.Placeholder = L.T("Адрес сервера на ПК", "Server address on the PC");
         CheckButton.Text = L.T("Проверить сервер", "Check server");
         ShizukuButton.Text = L.T("Проверить Shizuku", "Check Shizuku");
         PhoneInstallButton.Text = L.T("Установить перевод", "Install translation");
+        PhoneUpdateButton.Text = L.T("Обновить после апдейта игры", "Update after game update");
         PhoneCheckButton.Text = L.T("Проверить обновления", "Check for updates");
         PhoneSyncButton.Text = L.T("Передать главы на ПК", "Send chapters to PC");
         PhoneRestoreButton.Text = L.T("Вернуть оригиналы", "Restore originals");
@@ -135,6 +152,7 @@ public partial class MainPage : ContentPage
         RestoreButton.IsEnabled = !busy;
         ShizukuButton.IsEnabled = !busy;
         PhoneInstallButton.IsEnabled = !busy;
+        PhoneUpdateButton.IsEnabled = !busy;
         PhoneRestoreButton.IsEnabled = !busy;
         PhoneSyncButton.IsEnabled = !busy;
         PhoneCheckButton.IsEnabled = !busy;
@@ -245,6 +263,29 @@ public partial class MainPage : ContentPage
         finally { SetBusy(false); }
     }
 
+    // После обновления игры: передать главы на ПК, затем установить перевод. Если синхронизация не удалась, установка не запускается
+    private async void OnPhoneUpdateAfterGameClicked(object sender, EventArgs e)
+    {
+        SetBusy(true);
+        try
+        {
+            var installer = new PhoneInstaller(AppendLog);
+            SetStatus("Статус: синхронизация с ПК...");
+            if (!await installer.SyncAsync(ServerUrl))
+            {
+                AppendLog("[WARN] Синхронизация с ПК не удалась, установка пропущена. Проверьте сервер и Shizuku и повторите.");
+                SetStatus("Статус: синхронизация не удалась, установка пропущена");
+                return;
+            }
+            SetStatus("Статус: установка перевода после обновления игры...");
+            await installer.InstallAsync(ServerUrl);
+            var st = await installer.DetectGameUpdateAsync(true);
+            SetStatus(st != null ? st.Value.Status : "Статус: готово (см. журнал)");
+        }
+        catch (Exception ex) { AppendLog($"[ERROR] {ex.GetType().Name}: {ex.Message}"); SetStatus("Статус: ошибка"); }
+        finally { SetBusy(false); }
+    }
+
     private async void OnPhoneSyncClicked(object sender, EventArgs e)
     {
         SetBusy(true);
@@ -256,7 +297,13 @@ public partial class MainPage : ContentPage
     private async void OnPhoneCheckClicked(object sender, EventArgs e)
     {
         SetBusy(true);
-        try { await new PhoneInstaller(AppendLog).CheckUpdatesAsync(ServerUrl); }
+        try
+        {
+            var installer = new PhoneInstaller(AppendLog);
+            var st = await installer.DetectGameUpdateAsync();   // локальная проверка: работает и без сервера
+            if (st != null) SetStatus(st.Value.Status);
+            await installer.CheckUpdatesAsync(ServerUrl);
+        }
         catch (Exception ex) { AppendLog($"[ERROR] {ex.GetType().Name}: {ex.Message}"); }
         finally { SetBusy(false); }
     }

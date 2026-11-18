@@ -42,6 +42,10 @@
                     BackgroundColor="#2EA043" TextColor="White" CornerRadius="8" Padding="15,14"
                     FontSize="16" FontAttributes="Bold" />
 
+            <!-- После обновления игры: передать главы на ПК и сразу установить перевод -->
+            <Button x:Name="PhoneUpdateButton" Clicked="OnPhoneUpdateAfterGameClicked"
+                    BackgroundColor="#0B7285" TextColor="White" CornerRadius="8" Padding="15,12" FontSize="14" />
+
             <!-- Обслуживание -->
             <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                 <Button x:Name="PhoneCheckButton" Grid.Column="0" Clicked="OnPhoneCheckClicked"

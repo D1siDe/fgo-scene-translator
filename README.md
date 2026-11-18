@@ -51,11 +51,15 @@ Chapter files are patched on the fly. The translation survives game updates: aft
 1. Enter the server address (`http://<PC IP>:5000`) and press **Check server**, then **Check Shizuku**.
 2. Press **Send chapters to PC**. The server stores and decrypts the chapters you have downloaded.
 3. Translate the scenes (see below).
-4. Press **Install translation**, then start the game.
+4. Press **Install translation**, then start the game. Every built patch is also saved on the phone in `Download/FGO_RU_patch`; if the PC server is unreachable, **Install translation** installs from these copies (see "Offline install" below).
 5. After game updates or new translations: **Check for updates**, then **Install translation** again.
 6. **Restore originals** puts the original files back.
 
 The collapsed "Emulator mode" section contains the same install/restore actions performed by the PC over adb. It is meant for emulators only.
+
+## Offline install
+
+While the server is reachable, the app saves each built patch (the translated chapter file and a small metadata file) to `Download/FGO_RU_patch` on the phone. If the server cannot be reached, **Install translation** falls back to these copies. A copy is applied only if the chapter file on the phone is exactly the original it was built from (checked by MD5); if the game has updated the chapter, the copy is rejected and the PC server is needed to rebuild it. Original files are backed up to `Download/FGO_RU_backup` as usual.
 
 ## Translation format
 
@@ -103,7 +107,7 @@ dotnet build -t:Run -f net8.0-android -c Debug -p:AdbTarget="-s <serial>"
 ## Credits
 
 - [hexstr/FGOAssetsModifyTool](https://github.com/hexstr/FGOAssetsModifyTool): `core/fgo_crypto.py` is a Python port of the game's bundle/script cipher implementation from this project. The original repository does not state a license.
-- [Rayshift](https://github.com/rayshift/translatefgo) and its translation tooling for FGO: inspiration for installing translations without repacking the game.
+- [Rayshift](https://rayshift.io/) and its translation tooling for FGO: inspiration for installing translations without repacking the game.
 - [Shizuku](https://github.com/RikkaApps/Shizuku-API) by RikkaApps: privileged file access on Android (Apache-2.0).
 
 ## License
